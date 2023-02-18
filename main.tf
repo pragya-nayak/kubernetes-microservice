@@ -12,12 +12,12 @@ module "gke" {
 #     project_id = var.project_id
 # }
 
-resource "null_resource" "execfile" {
-  provisioner "local-exec" {
-    command = file("${path.module}/microservice.sh")
-    # interpreter = ["/bin/bash"]
-  }
-}
+# resource "null_resource" "execfile" {
+#   provisioner "local-exec" {
+#     command = file("${path.module}/microservice.sh")
+#     # interpreter = ["/bin/bash"]
+#   }
+# }
 
 # data "google_compute_network" "network" {
 #   name    = "default"
