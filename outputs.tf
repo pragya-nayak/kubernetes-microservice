@@ -13,7 +13,7 @@
 #   description = "GKE Cluster Name"
 # }
 
-# output "kubernetes_cluster_host" {
-#   value       = module.gke.kubernetes_cluster_host
-#   description = "GKE Cluster Host"
-# }
+output "cluster_name" {
+  value       = module.gke_cluster.name
+  description = "GKE Cluster Host"
+}
