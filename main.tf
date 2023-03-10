@@ -63,7 +63,7 @@ resource "google_logging_project_bucket_config" "basic" {
 
 # ## bucket
 resource "google_storage_bucket" "gke-log-bucket" {
-  name          = "stackdriver-${module.gke_cluster.name}-logging-bucket-${random_id.bucket_prefix.hex}"
+  name          = "${module.gke_cluster.name}-logging-bucket-${random_id.bucket_prefix.hex}"
   storage_class = "NEARLINE"
   location      = "US"
   project       = var.project_id
