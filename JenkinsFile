@@ -1,0 +1,115 @@
+
+pipeline {
+    agent any 
+    
+    stages {
+        stage ('GIT Commit') {
+            steps {
+             git branch: 'main', url: 'https://github.com/pragya-nayak/kubernetes-microservice.git'
+         }
+    }
+        stage('Terraform version') {
+            steps {
+                sh 'terraform --version'
+                
+            }
+        }
+        stage('Terraform Workspace') {
+            steps {
+                sh 'terraform init'
+                sh 'terraform workspace select '+ENV
+                
+            }
+        }
+        stage('Terraform Init') {
+            steps {
+ 
+                sh 'terraform init'
+                
+            }
+        }
+        stage('Terraform Operation') {
+            steps {
+                script{
+                    if (TF_OPERATION == 'plan') {
+                      sh 'terraform plan -var-file '+ENV+'.tfvars'
+                    }
+                    if (TF_OPERATION == 'apply') {
+                      sh 'terraform apply -var-file '+ENV+'.tfvars --auto-approve'
+                    }
+                    if (TF_OPERATION == 'destroy') {
+                    sh 'terraform destroy -var-file '+ENV+'.tfvars --auto-approve'
+                    }
+                }
+            }
+        }
+        
+        stage('Microservice Deployment'){
+            when{
+                expression {
+                    return params.MICROSERVICE_DEPLOYMENT
+                }
+            }
+            steps{
+                script{
+                      if (VERSION=='v1'){
+                      withCredentials([file(credentialsId: 'config', variable: 'KUBECRED')]) {
+                      sh'''
+                          gcloud config set project gcp-csb-g5
+                          gcloud container clusters get-credentials gcp-csb-g5-'''+ENV+'''-gke --region us-central1 --project gcp-csb-g5
+                          cat $KUBECRED > deployment.yaml
+                          cat deployment.yaml
+                          kubectl apply -f deployment.yaml
+                          sleep 1m
+                          kubectl get deployment
+                          kubectl get service
+                          '''
+                      }
+                      }
+                      if (VERSION=='v2'){
+                      withCredentials([file(credentialsId: 'configv2', variable: 'KUBECRED')]) {
+                      sh'''
+                          gcloud config set project gcp-csb-g5
+                          gcloud container clusters get-credentials gcp-csb-g5-'''+ENV+'''-gke --region us-central1 --project gcp-csb-g5
+                          cat $KUBECRED > deployment.yaml
+                          cat deployment.yaml
+                          kubectl apply -f deployment.yaml
+                          sleep 1m
+                          kubectl get deployment
+                          kubectl get service
+                          '''
+                      }
+                      }
+                    
+                   
+                    
+                } // script
+            } //steps
+        } // microservice stage
+        stage('Microservice Delete'){
+            when{
+                expression {
+                    return params.MICROSERVICE_DELETION
+                }
+            }
+            steps{
+                script{
+                    sh'''
+                    gcloud config set project gcp-csb-g5
+                    gcloud container clusters get-credentials gcp-csb-g5-'''+ENV+'''-gke --region us-central1 --project gcp-csb-g5
+                    '''
+                    
+                    sh'''
+                    kubectl get deployment
+                    kubectl get service
+                    kubectl delete service my-lb-service
+                    kubectl delete deployment my-deployment-50001
+                    '''
+                    
+                    
+                } // script
+            } //steps
+        }
+       
+} // stages
+} // pipeline
